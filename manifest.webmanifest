@@ -1,0 +1,19 @@
+{
+  "name": "音频合并器",
+  "short_name": "合并音频",
+  "description": "在设备本地合并 MP3、WAV 音频并下载",
+  "lang": "zh-CN",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#07131f",
+  "theme_color": "#07131f",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
