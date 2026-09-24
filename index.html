@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#07131f" />
+    <meta
+      name="description"
+      content="在手机或电脑浏览器中，将多个 MP3、WAV 音频按顺序合并并下载。文件只在本机处理。"
+    />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%2307131f'/%3E%3Cpath d='M13 34h6l4-14 7 28 6-34 6 24 4-12 5 8' fill='none' stroke='%2327e5c1' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <title>音频合并器</title>
+  </head>
+  <body>
+    <div class="ambient ambient-one" aria-hidden="true"></div>
+    <div class="ambient ambient-two" aria-hidden="true"></div>
+
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="音频合并器首页">
+        <span class="brand-mark" aria-hidden="true">
+          <i></i><i></i><i></i><i></i><i></i>
+        </span>
+        <span>音频合并器</span>
+      </a>
+      <button class="button button-ghost install-button" id="installButton" type="button" hidden>
+        安装到手机
+      </button>
+    </header>
+
+    <main class="page-shell">
+      <section class="intro" aria-labelledby="pageTitle">
+        <p class="eyebrow">LOCAL AUDIO TOOL</p>
+        <h1 id="pageTitle">把几段声音，接成一个文件</h1>
+        <p class="intro-copy">选择 MP3 或 WAV，排好顺序后合并。音频只在你的设备里处理，不会上传。</p>
+      </section>
+
+      <div class="workspace-grid">
+        <section class="panel queue-panel" aria-labelledby="queueTitle">
+          <div class="panel-heading">
+            <div>
+              <span class="step-number">01</span>
+              <h2 id="queueTitle">添加并排序</h2>
+            </div>
+            <span class="queue-count" id="queueCount">0 个文件</span>
+          </div>
+
+          <label class="drop-zone" id="dropZone" for="fileInput">
+            <input id="fileInput" type="file" accept=".mp3,.wav,audio/mpeg,audio/wav,audio/x-wav" multiple />
+            <span class="upload-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="img">
+                <path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" />
+              </svg>
+            </span>
+            <strong>选择本地音频</strong>
+            <span>支持多选 MP3、WAV，也可以把文件拖到这里</span>
+          </label>
+
+          <div class="empty-state" id="emptyState">
+            <div class="empty-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+            <p>还没有待合并的音频</p>
+          </div>
+
+          <ol class="audio-list" id="audioList" aria-label="待合并音频列表"></ol>
+
+          <div class="source-preview" id="sourcePreview" hidden>
+            <div>
+              <span>正在试听</span>
+              <strong id="sourcePreviewName"></strong>
+            </div>
+            <audio id="sourcePlayer" controls preload="metadata"></audio>
+          </div>
+
+          <div class="list-actions" id="listActions" hidden>
+            <label class="button button-secondary add-more" for="fileInput">继续添加</label>
+            <button class="text-button danger" id="clearButton" type="button">清空列表</button>
+          </div>
+        </section>
+
+        <aside class="panel merge-panel" aria-labelledby="mergeTitle">
+          <div class="panel-heading compact">
+            <div>
+              <span class="step-number">02</span>
+              <h2 id="mergeTitle">合并与下载</h2>
+            </div>
+          </div>
+
+          <div class="summary-block">
+            <div class="summary-row"><span>文件数量</span><strong id="summaryFiles">0</strong></div>
+            <div class="summary-row"><span>预计总时长</span><strong id="summaryDuration">00:00</strong></div>
+            <div class="summary-row"><span>文件总大小</span><strong id="summarySize">0 B</strong></div>
+          </div>
+
+          <label class="field">
+            <span>输出文件名</span>
+            <div class="filename-field">
+              <input id="outputName" type="text" value="合并音频" maxlength="80" autocomplete="off" />
+              <span>.wav</span>
+            </div>
+          </label>
+
+          <label class="field">
+            <span>声道</span>
+            <select id="channelMode">
+              <option value="auto">自动（推荐）</option>
+              <option value="mono">单声道</option>
+              <option value="stereo">立体声</option>
+            </select>
+          </label>
+
+          <div class="format-note">
+            <span>WAV</span>
+            <p>不同来源的 MP3、WAV 也能稳定拼接，下载后可继续播放或编辑。</p>
+          </div>
+
+          <div class="status-message" id="statusMessage" role="status" aria-live="polite" hidden></div>
+          <div class="progress-wrap" id="progressWrap" hidden>
+            <div class="progress-track"><i id="progressBar"></i></div>
+            <span id="progressText">正在准备…</span>
+          </div>
+
+          <button class="button button-primary merge-button" id="mergeButton" type="button" disabled>
+            <span>开始合并</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5" /></svg>
+          </button>
+
+          <section class="result-card" id="resultCard" aria-labelledby="resultTitle" hidden>
+            <div class="result-success" aria-hidden="true">✓</div>
+            <div class="result-heading">
+              <div>
+                <span>合并完成</span>
+                <h3 id="resultTitle">可以试听或下载了</h3>
+              </div>
+              <span id="resultMeta"></span>
+            </div>
+            <audio id="resultPlayer" controls preload="metadata"></audio>
+            <a class="button button-download" id="downloadButton" href="#" download>
+              下载合并音频
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4-4m4 4 4-4M5 20h14" /></svg>
+            </a>
+          </section>
+        </aside>
+      </div>
+
+      <footer>
+        <span class="privacy-dot" aria-hidden="true"></span>
+        本工具不保存、不上传你的音频。关闭页面后，所选文件会自动释放。
+      </footer>
+    </main>
+
+    <template id="audioItemTemplate">
+      <li class="audio-item" draggable="true">
+        <span class="drag-handle" title="拖动排序" aria-hidden="true">
+          <i></i><i></i><i></i><i></i><i></i><i></i>
+        </span>
+        <span class="track-number"></span>
+        <div class="track-info">
+          <strong class="track-name"></strong>
+          <span class="track-meta"></span>
+        </div>
+        <div class="track-actions">
+          <button class="icon-button play-item" type="button" aria-label="试听">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 7 8 5-8 5Z" /></svg>
+          </button>
+          <button class="icon-button move-up" type="button" aria-label="上移">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
+          </button>
+          <button class="icon-button move-down" type="button" aria-label="下移">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
+          </button>
+          <button class="icon-button remove-item" type="button" aria-label="删除">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+          </button>
+        </div>
+      </li>
+    </template>
+
+    <script src="./app.js" defer></script>
+  </body>
+</html>
